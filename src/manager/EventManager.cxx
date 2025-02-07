@@ -51,9 +51,6 @@ namespace Blip
             if(mConfig["manager"]["save_profile_data"]) { 
                 sSaveProfileData = mConfig["manager"]["save_profile_data"].as<G4bool>(); 
             }
-            if(mConfig["manager"]["save_hits"]) { 
-                sSaveHits = mConfig["manager"]["save_hits"].as<G4bool>(); 
-            }
             if(mConfig["argon"]["use_g4_definition"])   { 
                 mUseG4Definition = mConfig["argon"]["use_g4_definition"].as<G4bool>(); 
             }
@@ -76,26 +73,9 @@ namespace Blip
                 mLArPressure = mConfig["argon"]["lar_pressure"].as<G4double>() * atmosphere; 
             }
         }
-        if(mConfig["analysis"])
-        {
-            if(mConfig["analysis"]["N_x"]) { 
-                mN_x = mConfig["analysis"]["N_x"].as<G4int>(); 
-            }
-            if(mConfig["analysis"]["N_y"]) { 
-                mN_y = mConfig["analysis"]["N_y"].as<G4int>(); 
-            }
-            if(mConfig["analysis"]["N_z"]) { 
-                mN_z = mConfig["analysis"]["N_z"].as<G4int>(); 
-            }
-        }
         if(mConfig["hall"]["world_x"]) { mHallX = mConfig["hall"]["world_x"].as<G4double>() * m; }
         if(mConfig["hall"]["world_y"]) { mHallY = mConfig["hall"]["world_y"].as<G4double>() * m; }
         if(mConfig["hall"]["world_z"]) { mHallZ = mConfig["hall"]["world_z"].as<G4double>() * m; }
-
-        mAnalysisRunBeginFunctions.emplace_back(bkgdAnalysisFunctionRunBegin);
-        mAnalysisRunEndFunctions.emplace_back(bkgdAnalysisFunctionRunEnd);
-        mAnalysisEventBeginFunctions.emplace_back(bkgdAnalysisFunctionEventBegin);
-        mAnalysisEventEndFunctions.emplace_back(bkgdAnalysisFunctionEventEnd);
 
         G4GDMLParser* mGDMLParser;
 
@@ -398,30 +378,6 @@ namespace Blip
         }
         EndFunctionProfile("FillEnergyDeposits");
     }
-
-    void EventManager::FillNeutronRunData()
-    {
-        if (!SaveNeutronData()) {
-            return;
-        }
-        StartFunctionProfile();
-
-        auto AnalysisManager = G4AnalysisManager::Instance();
-        G4int index = GetIndex("NeutronRunData");
-        AnalysisManager->FillNtupleIColumn(index, 0, sNeutronRunData.num_events);
-        AnalysisManager->FillNtupleIColumn(index, 1, sNeutronRunData.num_detected);
-        AnalysisManager->FillNtupleIColumn(index, 2, sNeutronRunData.num_elastic);
-        AnalysisManager->FillNtupleIColumn(index, 3, sNeutronRunData.num_inelastic);
-        AnalysisManager->FillNtupleIColumn(index, 4, sNeutronRunData.num_capture);
-        AnalysisManager->FillNtupleIColumn(index, 5, sNeutronRunData.num_fission);
-        AnalysisManager->FillNtupleIColumn(index, 6, sNeutronRunData.num_scatter);
-        AnalysisManager->FillNtupleIColumn(index, 7, sNeutronRunData.num_scatter_out);
-        AnalysisManager->FillNtupleIColumn(index, 8, sNeutronRunData.num_scatter_detector);
-        AnalysisManager->AddNtupleRow(index);
-
-        EndFunctionProfile("FillNeutronRunData");
-    }
-
     void EventManager::AddParticleMapsFromTrack(const G4Track* track)
     {
         StartFunctionProfile();
@@ -588,7 +544,6 @@ namespace Blip
         G4ThreeVector   post_step_momentum = post_step_point->GetMomentum();
         G4double        edep = step->GetTotalEnergyDeposit();
         G4double        kinetic_energy = track->GetKineticEnergy();
-
         if(GetParticleParentTrackID(track_id) == 0)
         {
             if(parent_track_id == 0) {
@@ -604,6 +559,7 @@ namespace Blip
             local_time, pre_step_position, kinetic_energy, pre_step_momentum
         );
 
+        G4StepStatus pre_step_status = pre_step_point->GetStepStatus();
         G4StepStatus post_step_status = post_step_point->GetStepStatus();
         if (post_step_status == fWorldBoundary)
         {

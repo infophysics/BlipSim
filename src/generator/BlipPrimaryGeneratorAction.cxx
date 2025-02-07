@@ -34,7 +34,7 @@ namespace Blip
         G4ParticleDefinition* particle = G4ParticleTable::GetParticleTable()->FindParticle("neutron");
         mParticleGun->SetNumberOfParticles(1);
         mParticleGun->SetParticleEnergy(57*keV);
-        mParticleGun->SetParticlePosition(G4ThreeVector(0.,0., mTZeroLocation));
+        mParticleGun->SetParticlePosition(G4ThreeVector(0.,0.,0.));
         mParticleGun->SetParticleMomentumDirection(G4ThreeVector(0.,0.,1.));
         mParticleGun->SetParticleDefinition(particle);
     }
@@ -42,14 +42,12 @@ namespace Blip
     void BlipPrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
     {
         mParticleGun->SetNumberOfParticles(1);
-        G4double BeamEnergy = SampleBeamEnergy();
-        G4double deltaTOF = SampleTOF(BeamEnergy);
-        G4ThreeVector StartPosition = SampleBeamProfile(mTZeroLocation);
-        G4ThreeVector StartMomentum = SampleBeamMomentum(StartPosition);
-        mParticleGun->SetParticleTime(deltaTOF);
-        mParticleGun->SetParticlePosition(StartPosition);
-        mParticleGun->SetParticleMomentumDirection(StartMomentum);
-        mParticleGun->SetParticleEnergy(BeamEnergy);
+        G4ParticleDefinition* particle = G4ParticleTable::GetParticleTable()->FindParticle("neutron");
+        mParticleGun->SetNumberOfParticles(1);
+        mParticleGun->SetParticleEnergy(10 * MeV);
+        mParticleGun->SetParticlePosition(G4ThreeVector(0.,0.,0.));
+        mParticleGun->SetParticleMomentumDirection(G4ThreeVector(0.,0.,1.));
+        mParticleGun->SetParticleDefinition(particle);
         mParticleGun->GeneratePrimaryVertex(event);
     }
 }

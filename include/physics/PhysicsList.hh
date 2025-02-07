@@ -18,8 +18,6 @@
 #include "G4IonPhysics.hh"
 #include "G4HadronElasticPhysicsHP.hh"
 #include "G4HadronPhysicsQGSP_BERT_HP.hh"
-// #include "HadronPhysicsQGSP_INCLXX.hh"
-// #include "G4HadronPhysicsINCLXX.hh"
 
 #include "G4ParticleHPThermalScattering.hh"
 #include "G4ParticleHPElasticData.hh"
@@ -45,8 +43,6 @@
 #include "G4StepLimiterPhysics.hh"
 #include "G4StepLimiter.hh"
 
-#include "yaml-cpp/yaml.h"
-
 #include "G4ProcessTable.hh"
 #include "G4SystemOfUnits.hh"
 #include "G4UnitsTable.hh"
@@ -62,14 +58,12 @@ namespace Blip
         PhysicsList();
         ~PhysicsList();
 
-        PhysicsList(YAML::Node config);
-
         virtual void SetCuts();
         virtual void ConstructParticle();
 
         void PrintPhysicsLists();
 
     private:
-        YAML::Node mConfig;
+        
     };
 }

@@ -66,12 +66,19 @@ namespace Blip
         G4double mExperimentalHallX = {500 * m};
         G4double mExperimentalHallY = {500 * m};
         G4double mExperimentalHallZ = {500 * m};
+        G4double mArgonX = {500 * m};
+        G4double mArgonY = {500 * m};
+        G4double mArgonZ = {500 * m};
 
         // Experimental Hall
         G4Material *mWorldMaterial;
+        G4Material *mArgon;
         G4Box* mSolidExperimentalHall;
         G4LogicalVolume* mLogicalExperimentalHall;
         G4VPhysicalVolume* mPhysicalExperimentalHall;
+        G4Box* mSolidArgon;
+        G4LogicalVolume* mLogicalArgon;
+        G4VPhysicalVolume* mPhysicalArgon;
 
 #ifdef BLIP_YAML
         YAML::Node mConfig;

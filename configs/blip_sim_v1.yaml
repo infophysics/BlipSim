@@ -1,0 +1,32 @@
+# ARTIE manager parameters
+manager:
+    number_of_threads:  8
+    number_of_runs:     1
+    number_of_events:   500
+    seed:               10942
+    mode:               "interactive"   # interactive/run
+    output_filename:    "blip_test"
+    save_particle_maps: true
+    save_primary_info:  true
+
+# ARTIE argon parameters 
+argon:
+    use_g4_definition:  false
+    argon_36_ratio:     0.334   # %
+    argon_38_ratio:     0.063   # %
+    argon_40_ratio:     99.603  # %
+    lar_density:        1.3954  # g/cm^3
+    lar_temperature:    85.0    # K
+    lar_pressure:       0.952   # atm
+
+hall:
+    world_x: 100    # m                 
+    world_y: 100    # m
+    world_z: 100    # m
+    world_material: "high_vacuum"
+    argon_x: 100
+    argon_y: 100
+    argon_z: 100
+    
+# ARTIE-I generator parameters
+generator:

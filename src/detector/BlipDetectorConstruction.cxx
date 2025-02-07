@@ -28,6 +28,9 @@ namespace Blip
         if(mConfig["hall"]["world_x"])          { mExperimentalHallX = mConfig["hall"]["world_x"].as<G4double>() * m; }
         if(mConfig["hall"]["world_y"])          { mExperimentalHallY = mConfig["hall"]["world_y"].as<G4double>() * m; }
         if(mConfig["hall"]["world_z"])          { mExperimentalHallZ = mConfig["hall"]["world_z"].as<G4double>() * m; }
+        if(mConfig["hall"]["argon_x"])          { mArgonX = mConfig["hall"]["argon_x"].as<G4double>() * m; }
+        if(mConfig["hall"]["argon_y"])          { mArgonY = mConfig["hall"]["argon_y"].as<G4double>() * m; }
+        if(mConfig["hall"]["argon_z"])          { mArgonZ = mConfig["hall"]["argon_z"].as<G4double>() * m; }
 
         DefineMaterials();
     }
@@ -36,6 +39,7 @@ namespace Blip
     void BlipDetectorConstruction::DefineMaterials()
     {
         mWorldMaterial = CreateMaterial(mWorldMaterialName, "World");
+        mArgon = CreateMaterial("liquid_argon", "argon");
     }
 
     BlipDetectorConstruction::~BlipDetectorConstruction()
@@ -66,6 +70,29 @@ namespace Blip
             false,
             0
         );
+
+        mSolidArgon = new G4Box(
+            "Solid_Argon",
+            mArgonX,
+            mArgonY,
+            mArgonZ
+        );
+        mLogicalArgon = new G4LogicalVolume(
+            mSolidArgon,
+            mArgon,
+            "Logical_Argon"
+        );
+        mPhysicalArgon = new G4PVPlacement(
+            0,
+            G4ThreeVector(0., 0., 0.),
+            mLogicalArgon,
+            "Physical_Argon",
+            mLogicalExperimentalHall,
+            false,
+            0,
+            true
+        );
+        
 
         return mPhysicalExperimentalHall;
     }

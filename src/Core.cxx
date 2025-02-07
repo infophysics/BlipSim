@@ -112,7 +112,7 @@ namespace Blip
         return name;
     }
 
-#ifdef ARTIE_YAML
+#ifdef BLIP_YAML
     ConfigParser::ConfigParser(G4String configurationFile)
     : mConfigurationFile(configurationFile)
     {
@@ -121,12 +121,6 @@ namespace Blip
         {
             std::cout << "CONFIG ERROR! the section ";
             std::cout << "'manager' does not exist!" << std::endl;
-            exit(0);
-        }
-        if(!mConfig["detector"]) 
-        {
-            std::cout << "CONFIG ERROR! the section ";
-            std::cout << "'detector' does not exist!" << std::endl;
             exit(0);
         }
         if(!mConfig["generator"]) 
@@ -175,18 +169,6 @@ namespace Blip
         {
             std::cout << "CONFIG ERROR! the parameter ";
             std::cout << "'manager:save_primary_info' does not exist!" << std::endl;
-            exit(0);
-        }
-        if(!mConfig["manager"]["save_hits"]) 
-        {
-            std::cout << "CONFIG ERROR! the parameter ";
-            std::cout << "'manager:save_hits' does not exist!" << std::endl;
-            exit(0);
-        }
-        if(!mConfig["manager"]["save_neutron_data"]) 
-        {
-            std::cout << "CONFIG ERROR! the parameter ";
-            std::cout << "'manager:save_neutron_data' does not exist!" << std::endl;
             exit(0);
         }
     }

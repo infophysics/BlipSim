@@ -48,8 +48,8 @@ int main(int argc, char** argv)
         std::cout << "  Must pass in a config file!" << std::endl;
         exit(0);
     }
-    auto Config = Artie::ConfigParser(ConfigFile);
-    Artie::EventManager::GetEventManager()->SetConfig(Config.GetConfig());
+    auto Config = Blip::ConfigParser(ConfigFile);
+    Blip::EventManager::GetEventManager()->SetConfig(Config.GetConfig());
 
     // choose the Random engine
     G4Random::setTheEngine(new CLHEP::RanecuEngine);
@@ -66,7 +66,7 @@ int main(int argc, char** argv)
 #ifdef G4MULTITHREADED
     G4MTRunManager* RunManager = new G4MTRunManager();
     RunManager->SetNumberOfThreads(
-        Artie::EventManager::GetEventManager()->NumberOfThreads()
+        Blip::EventManager::GetEventManager()->NumberOfThreads()
     );
 #else
     G4RunManager* RunManager = new G4RunManager;
@@ -74,13 +74,13 @@ int main(int argc, char** argv)
     
     // apply the detector, physics list and initialization
     RunManager->SetUserInitialization(
-        new Artie::BlipDetectorConstruction(Config.GetConfig())
+        new Blip::BlipDetectorConstruction(Config.GetConfig())
     );
     RunManager->SetUserInitialization(
-        new Artie::PhysicsList(Config.GetConfig())
+        new Blip::PhysicsList()
     );
     RunManager->SetUserInitialization(
-        new Artie::BlipActionInitialization(Config.GetConfig())
+        new Blip::BlipActionInitialization(Config.GetConfig())
     );
 
     if(Config.GetConfig()["manager"]["mode"].as<std::string>() == "interactive")
