@@ -30,6 +30,7 @@
 #include "Core.hh"
 #include "EventManager.hh"
 #include "PhysicsList.hh"
+#include "MyQGSP_BERT_ArHP.hh"
 
 int main(int argc, char** argv)
 {
@@ -77,7 +78,7 @@ int main(int argc, char** argv)
         new Blip::BlipDetectorConstruction(Config.GetConfig())
     );
     RunManager->SetUserInitialization(
-        new Blip::PhysicsList()
+        new Blip::MyQGSP_BERT_ArHP()
     );
     RunManager->SetUserInitialization(
         new Blip::BlipActionInitialization(Config.GetConfig())

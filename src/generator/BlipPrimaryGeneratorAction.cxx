@@ -44,7 +44,7 @@ namespace Blip
         mParticleGun->SetNumberOfParticles(1);
         G4ParticleDefinition* particle = G4ParticleTable::GetParticleTable()->FindParticle("neutron");
         mParticleGun->SetNumberOfParticles(1);
-        mParticleGun->SetParticleEnergy(10 * MeV);
+        mParticleGun->SetParticleEnergy(10 * keV);
         mParticleGun->SetParticlePosition(G4ThreeVector(0.,0.,0.));
         mParticleGun->SetParticleMomentumDirection(G4ThreeVector(0.,0.,1.));
         mParticleGun->SetParticleDefinition(particle);
