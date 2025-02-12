@@ -57,6 +57,12 @@ namespace Blip
         void DefineMaterials();
 
         virtual G4VPhysicalVolume* Construct();
+
+        // -- add a way to retrieve the logical volumes or physical volumes
+        //G4LogicalVolume* GetLogicalVolumeByName(const G4String& lvolumeName) const;
+        //G4PhysicalVolume* GetPhysicalVolumeByName(const G4String& pvolumeName) const;
+
+        G4LogicalVolume* GetArgonLogicalVolume() const { return mLogicalArgon; }
     
     private:
         virtual void ConstructSDandField();

@@ -16,6 +16,7 @@
 #endif
 
 #include "BlipPrimaryGeneratorAction.hh"
+#include "BoxRadGeneratorAction.hh"
 #include "EventManager.hh"
 
 namespace Blip

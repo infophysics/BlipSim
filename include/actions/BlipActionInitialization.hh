@@ -9,6 +9,7 @@
 #include "G4VUserActionInitialization.hh"
 
 #include "BlipPrimaryGeneratorAction.hh"
+#include "BoxRadGeneratorAction.hh"
 #include "RunAction.hh"
 #include "EventAction.hh"
 #include "SteppingAction.hh"
