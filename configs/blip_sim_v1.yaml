@@ -4,7 +4,7 @@ manager:
     number_of_runs:     1
     number_of_events:   500
     seed:               10942
-    mode:               "interactive"   # interactive/run
+    mode:               "run"   # interactive/run
     output_filename:    "blip_test"
     save_particle_maps: true
     save_primary_info:  true
