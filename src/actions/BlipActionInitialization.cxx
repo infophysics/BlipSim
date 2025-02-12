@@ -28,8 +28,10 @@ namespace Blip
     {
 #ifdef BLIP_YAML
         SetUserAction(new BlipPrimaryGeneratorAction(mConfig));
+        SetUserAction(new BoxRadGeneratorAction(mConfig));
 #else
         SetUserAction(new BlipPrimaryGeneratorAction());
+        SetUserAction(new BoxRadGeneratorAction();
 #endif 
         SetUserAction(new RunAction());
         SetUserAction(new EventAction());
