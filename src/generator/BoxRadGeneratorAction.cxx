@@ -19,6 +19,10 @@
  #include "G4ThreeVector.hh"
  #include "G4PrimaryVertex.hh"
 
+ #include <fstream>
+ #include <sys/stat.h>
+ #include <string>
+
 
  namespace Blip
  {
@@ -28,7 +32,7 @@
         const G4VUserDetectorConstruction* detectorConstruction = G4RunManager::GetRunManager()->GetUserDetectorConstruction();
         const BlipDetectorConstruction* LArBox = dynamic_cast<const BlipDetectorConstruction*>(detectorConstruction);
         mVolume = LArBox->GetArgonLogicalVolume(); // -- need to get this from the detector construction
-        mRadName = "Ar39";
+        mRadName = "Argon_39";
         mTRandom3 = new TRandom3();
         mParticleGun = new G4ParticleGun(1); // -- single rads at a time... I guess
         mParticleGun->SetParticleDefinition(G4Electron::Electron()); // -- the beta
@@ -37,7 +41,7 @@
     }    
 
     BoxRadGeneratorAction::BoxRadGeneratorAction(G4LogicalVolume* volume, G4String radName)
-    : mVolume(volume), mRadName(radName), mSpectrumReader(new SpectrumReader("rads/Ar39.root"))
+    : mVolume(volume), mRadName(radName), mSpectrumReader(new SpectrumReader("rads/Argon_39.root"))
     {
         const G4VUserDetectorConstruction* detectorConstruction = G4RunManager::GetRunManager()->GetUserDetectorConstruction();
         const BlipDetectorConstruction* LArBox = dynamic_cast<const BlipDetectorConstruction*>(detectorConstruction);
@@ -59,14 +63,39 @@
     BoxRadGeneratorAction::BoxRadGeneratorAction(YAML::Node config)
     : mConfig(config)
     {
+
+        // -- read in and check the config. TODO: add more thorough checks..
+        if (mConfig["generator"]["radiological"])           { mRadName = mConfig["generator"]["number"].as<G4String>() ; }
+        if (mConfig["generator"]["nDecays"])                { mNBetas = mConfig["generator"]["number"].as<int>() ; }
+        if (mConfig["generator"]["spectrumPath"])           { mSpectrumPath = mConfig["generator"]["filePath"].as<G4String>() ; }
+        if (mConfig["generator"]["energy"])                 { mFixedEnergy = mConfig["generator"]["energy"].as<G4double>() ; }
+
+        G4bool fileExists = false;
+        std::string fullPath = mSpectrumPath + mRadName + ".root";
+        ifstream f(fullPath.c_str());
+        fileExists = ( f.good() ? true : false );
+
+        if (fileExisist)
+        {
+            std::cout << "Using file: " << fullPath << " to sample rads" << std::endl;
+            mSpectrumRead = new SpectrumReader(fullPath);
+            auto const & mEnergies = mSpectrumRead->GetRandomEnergy(mNBetas);
+        } else {
+            std::cout << "Cannot find file : " << fullPath << ". Will generate fixed energy betas" << std::endl;
+            mRadName = "Argon_39";
+            mFixedEnergy = 500 * keV;
+        }
+
+
         const G4VUserDetectorConstruction* detectorConstruction = G4RunManager::GetRunManager()->GetUserDetectorConstruction();
         const BlipDetectorConstruction* LArBox = dynamic_cast<const BlipDetectorConstruction*>(detectorConstruction);
         mVolume = LArBox->GetArgonLogicalVolume(); // -- need to get this from the detector construction
-        mRadName = "Ar39";
+
         mTRandom3 = new TRandom3();
-        mParticleGun = new G4ParticleGun(1); // -- single rads at a time... I guess
+
+        mParticleGun = new G4ParticleGun(mNBetas); // -- Multiple decays
         mParticleGun->SetParticleDefinition(G4Electron::Electron()); // -- the beta
-        mParticleGun->SetParticleEnergy(500 * keV); // -- default energy
+        mParticleGun->SetParticleEnergy(mFixedEnergy); // -- default energy
         mParticleGun->SetParticleMomentumDirection(G4ThreeVector(0., 0., 1.));
     }    
 

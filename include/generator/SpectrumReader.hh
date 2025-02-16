@@ -1,9 +1,8 @@
 #include "TFile.h"
-#include "TH1.h"
-#include "TH1D.h"
-#include "TH1F.h"
-#include "TH2D.h"
+#include "TGraph.h"
 #include "TRandom3.h"
+
+#include <vector>
 
 namespace Blip {
 
@@ -13,10 +12,11 @@ namespace Blip {
         virtual ~SpectrumReader();
 
         double GetRandomEnergy(); // -- sample from the spectrum randomly
+        std::vector<double> GetRandomEnergy(int nDecays); // -- sample n times
 
     private:
         TFile* mRootFile;
-        TH1D* mEnergySpectra; // -- histo inside file
+        TGraph* mEnergySpectra; // -- TGraph inside file
         TRandom3* mRandom; // -- rng
     };
 

@@ -4,9 +4,9 @@ namespace Blip
 {
     SpectrumReader::SpectrumReader(const std::string& rootFilePath)
     {
-        mRootFile = TFile::Open("");
+        mRootFile = TFile::Open(rootFilePath.c_str());
         if (mRootFile && mRootFile->IsOpen()) {
-            mEnergySpectra = (TH1D*)mRootFile->Get("Ar30_TH1D"); // -- FIXME: Need to actually get the right names from the LArSoft files
+            mEnergySpectra = (TGraph*)mRootFile->Get("Betas"); // -- FIXME: Need to actually get the right names from the LArSoft files
             mRandom = new TRandom3();
         }
     }

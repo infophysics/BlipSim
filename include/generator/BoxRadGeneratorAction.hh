@@ -33,7 +33,7 @@ namespace Blip
     {
     public:
         BoxRadGeneratorAction();
-        BoxRadGeneratorAction(G4LogicalVolume* volume, G4String radName="Ar39");
+        BoxRadGeneratorAction(G4LogicalVolume* volume, G4String radName="Argon_39");
         BoxRadGeneratorAction(YAML::Node config); // -- constructor that takes the radName and the logical volume from the config
         
         ~BoxRadGeneratorAction();
@@ -49,6 +49,8 @@ namespace Blip
             SpectrumReader* mSpectrumReader; // -- Reader for radiological
             G4LogicalVolume* mVolume; // -- Logical volume for the rads
             G4String mRadName; // -- name of radiological (e.g. Ar39, Ar42, etc)
+            G4String mSpectrumPath; // -- path of radioIsotope file
+            G4double mFixedEnergy; // -- fixed energy for now
 
             G4String mParticleName;
             G4double mParticleMomentum;
@@ -59,5 +61,7 @@ namespace Blip
             TRandom3* mTRandom3 = {0};
 
             YAML::Node mConfig;
+
+            int mNBetas;
     };
 }
