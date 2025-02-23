@@ -9,9 +9,14 @@
 #include "G4ParticleGun.hh"
 #include "G4IonTable.hh"
 #include "G4Event.hh"
+#include "G4LogicalVolume.hh"
+#include "G4Box.hh"
 #include "Randomize.hh"
-#include "EventManager.hh"
+#include "G4EventManager.hh"
 #include "G4ThreeVector.hh"
+#include "G4ParticleGun.hh"
+
+#include "TLorentzVector.h"
 
 #include "TFile.h"
 #include "TH1D.h"
@@ -29,6 +34,13 @@
 
 namespace Blip
 {
+    struct particle {
+        int pdgID;
+        int genID;
+        G4ThreeVector position;
+        TLorentzVector momentum4Vector;
+    };
+
     class BoxRadGeneratorAction : public G4VUserPrimaryGeneratorAction
     {
     public:
@@ -39,17 +51,22 @@ namespace Blip
         ~BoxRadGeneratorAction();
 
         virtual void GeneratePrimaries(G4Event* event) override;
+        void AddDecayParticle(G4Event* event, const int pdg, const G4ThreeVector& pos, const double time, const double energy, const G4ThreeVector& momentum);
 
         YAML::Node Config() const {return mConfig; }
 
         G4ThreeVector GetRandomPositionInVolume(G4LogicalVolume* volume);
+        TLorentzVector GetDirection(double& p, double& m);
 
         private:
             G4ParticleGun* mParticleGun;
             SpectrumReader* mSpectrumReader; // -- Reader for radiological
-            G4LogicalVolume* mVolume; // -- Logical volume for the rads
-            G4String mRadName; // -- name of radiological (e.g. Ar39, Ar42, etc)
-            G4String mSpectrumPath; // -- path of radioIsotope file
+            G4LogicalVolume* mLogicalVolume; // -- Logical volume for the rads
+            G4Box* mBox; // -- box of argon
+            G4double mVolume; // -- volume of argon box in units of mm^3
+            std::string mRadName; // -- name of radiological (e.g. Argon_39, Argon_42, etc)
+            G4double rateInBq; // -- Bequerel
+            std::string mSpectrumPath; // -- path of radioIsotope file
             G4double mFixedEnergy; // -- fixed energy for now
 
             G4String mParticleName;
@@ -62,6 +79,6 @@ namespace Blip
 
             YAML::Node mConfig;
 
-            int mNBetas;
+            long mNBetas;
     };
 }

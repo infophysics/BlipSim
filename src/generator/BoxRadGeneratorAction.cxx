@@ -31,7 +31,7 @@
     {
         const G4VUserDetectorConstruction* detectorConstruction = G4RunManager::GetRunManager()->GetUserDetectorConstruction();
         const BlipDetectorConstruction* LArBox = dynamic_cast<const BlipDetectorConstruction*>(detectorConstruction);
-        mVolume = LArBox->GetArgonLogicalVolume(); // -- need to get this from the detector construction
+        mLogicalVolume = LArBox->GetArgonLogicalVolume(); // -- need to get this from the detector construction
         mRadName = "Argon_39";
         mTRandom3 = new TRandom3();
         mParticleGun = new G4ParticleGun(1); // -- single rads at a time... I guess
@@ -41,11 +41,11 @@
     }    
 
     BoxRadGeneratorAction::BoxRadGeneratorAction(G4LogicalVolume* volume, G4String radName)
-    : mVolume(volume), mRadName(radName), mSpectrumReader(new SpectrumReader("rads/Argon_39.root"))
+    : mLogicalVolume(volume), mRadName(radName), mSpectrumReader(new SpectrumReader(radName, "./rads/","Argon_39.root"))
     {
         const G4VUserDetectorConstruction* detectorConstruction = G4RunManager::GetRunManager()->GetUserDetectorConstruction();
         const BlipDetectorConstruction* LArBox = dynamic_cast<const BlipDetectorConstruction*>(detectorConstruction);
-        mVolume = LArBox->GetArgonLogicalVolume(); // -- need to get this from the detector construction
+        mLogicalVolume = LArBox->GetArgonLogicalVolume(); // -- need to get this from the detector construction
         mTRandom3 = new TRandom3();
         mParticleGun = new G4ParticleGun(1); // -- single rads at a time... I guess
         mParticleGun->SetParticleDefinition(G4Electron::Electron()); // -- the beta
@@ -65,21 +65,22 @@
     {
 
         // -- read in and check the config. TODO: add more thorough checks..
-        if (mConfig["generator"]["radiological"])           { mRadName = mConfig["generator"]["number"].as<G4String>() ; }
-        if (mConfig["generator"]["nDecays"])                { mNBetas = mConfig["generator"]["number"].as<int>() ; }
-        if (mConfig["generator"]["spectrumPath"])           { mSpectrumPath = mConfig["generator"]["filePath"].as<G4String>() ; }
-        if (mConfig["generator"]["energy"])                 { mFixedEnergy = mConfig["generator"]["energy"].as<G4double>() ; }
+        if (mConfig["generator"]["radiological"])           { mRadName = mConfig["generator"]["radiological"].as<std::string>() ; }
+        if (mConfig["generator"]["rateInBqPerCC"])          { rateInBq = mConfig["generator"]["rateInBqPerCC"].as<G4double>(); } // -- decays per sec per cm^3
+        if (mConfig["generator"]["nDecays"])                { mNBetas = mConfig["generator"]["nDecays"].as<int>() ; }
+        if (mConfig["generator"]["spectrumPath"])           { mSpectrumPath = mConfig["generator"]["spectrumPath"].as<std::string>() ; }
+        if (mConfig["generator"]["energy"])                 { mFixedEnergy = mConfig["generator"]["energy"].as<G4double>() * keV; }
 
         G4bool fileExists = false;
         std::string fullPath = mSpectrumPath + mRadName + ".root";
-        ifstream f(fullPath.c_str());
+        std::ifstream f(fullPath.c_str());
         fileExists = ( f.good() ? true : false );
 
-        if (fileExisist)
+        if (fileExists)
         {
             std::cout << "Using file: " << fullPath << " to sample rads" << std::endl;
-            mSpectrumRead = new SpectrumReader(fullPath);
-            auto const & mEnergies = mSpectrumRead->GetRandomEnergy(mNBetas);
+            mSpectrumReader = new SpectrumReader(mRadName, mSpectrumPath, mRadName+".root");
+            //<--auto const & mEnergies = mSpectrumRead->GetRandomEnergy(mNBetas);
         } else {
             std::cout << "Cannot find file : " << fullPath << ". Will generate fixed energy betas" << std::endl;
             mRadName = "Argon_39";
@@ -89,31 +90,77 @@
 
         const G4VUserDetectorConstruction* detectorConstruction = G4RunManager::GetRunManager()->GetUserDetectorConstruction();
         const BlipDetectorConstruction* LArBox = dynamic_cast<const BlipDetectorConstruction*>(detectorConstruction);
-        mVolume = LArBox->GetArgonLogicalVolume(); // -- need to get this from the detector construction
+        mLogicalVolume = LArBox->GetArgonLogicalVolume(); // -- need to get this from the detector construction
+        
+        // -- Get the box corresponding to the logical volume
+        mBox = dynamic_cast<G4Box*>(mLogicalVolume->GetSolid());
+        if (mBox) { mVolume = mBox->GetCubicVolume(); } // -- volume in mm^3
+        std::cout << "Argon box volume = " << mVolume << std::endl;
 
         mTRandom3 = new TRandom3();
 
-        mParticleGun = new G4ParticleGun(mNBetas); // -- Multiple decays
-        mParticleGun->SetParticleDefinition(G4Electron::Electron()); // -- the beta
-        mParticleGun->SetParticleEnergy(mFixedEnergy); // -- default energy
-        mParticleGun->SetParticleMomentumDirection(G4ThreeVector(0., 0., 1.));
+        // -- Calculate the number of decays to generate
+        G4double mVolume_cm3 = mVolume / 1000.; // going from mm^3 to cm^3
+        G4double deltaT_s = 3.E-3; // -- 15 ms in seconds to match the units of Bq
+        //double meanNumberOfDecays = (rateInBq * mVolume_cm3 * deltaT_s)/(1.E6);
+        double meanNumberOfDecays = (rateInBq * mVolume_cm3 * deltaT_s);
+
+        // -- sample from a Poisson distribution
+        mNBetas = mTRandom3->Poisson(meanNumberOfDecays);
+        std::cout << "Generating " << mNBetas << " beta decays" << std::endl;
+
+        // -- test
+        //mNBetas = 100;
+
+        // -- sample the decays
+        //bool test = mSpectrumReader->SampleTheRadiological(mNBetas);
+        bool test = mSpectrumReader->GenNDecays(mRadName, mNBetas);
+        if (test) { std::cout << "Successfully sampled the spectrum " << mNBetas << " times!\n"; }
+
+        //mParticleGun = new G4ParticleGun(1); // -- Multiple decays
+        //mParticleGun->SetParticleDefinition(G4Electron::Electron()); // -- the beta
+        //mParticleGun->SetParticleEnergy(mFixedEnergy); // -- default energy
+        //mParticleGun->SetParticleMomentumDirection(G4ThreeVector(0., 0., 1.));
     }    
+
+    void BoxRadGeneratorAction::AddDecayParticle(G4Event* event, const int pdg, const G4ThreeVector& pos, const double time, const double energy, const G4ThreeVector& mom)
+    {
+        auto vertex = new G4PrimaryVertex{pos, time};
+        vertex->SetPrimary(new G4PrimaryParticle{pdg, mom.x(), mom.y(), mom.z(), energy});
+        event->AddPrimaryVertex(vertex);
+    }
 
     void BoxRadGeneratorAction::GeneratePrimaries(G4Event* event)
     {
-        // -- sample the energy from the ROOT spectrum
-        //<--G4double energy = mSpectrumReader->GetRandomEnergy(); // -- TODO: get the spectrum files and fix this
-        G4double energy = 500 * keV; 
-        mParticleGun->SetParticleEnergy(energy);
+        // loop over the beta energies
+        std::vector<double> theKEs = mSpectrumReader->getKineticEnergies();
 
-        // -- sample random position from within the logical volume
-        G4ThreeVector position = GetRandomPositionInVolume(mVolume);
-        std::cout << "Volume name for radiological: " << mVolume->GetName() << std::endl;
-        mParticleGun->SetParticlePosition(position);
+        size_t NBetas = theKEs.size();
 
-        // -- Generate the radiological decay products
-        mParticleGun->GeneratePrimaryVertex(event);
+        // -- get the mass
+        G4double mass = G4Electron::Electron()->GetPDGMass();
+        std::cout << "Electron mass = " << mass << std::endl;
+        std::cout << "Producing " << NBetas << " decays" << std::endl;
 
+        for (size_t i = 0; i<NBetas; i++)
+        {
+            // -- sample the energy from the ROOT spectrum
+            //<--G4double energy = mSpectrumReader->GetRandomEnergy(); // -- TODO: get the spectrum files and fix this
+            G4double T = theKEs.at(i);
+            G4double energy = T + mass;
+            G4double p = energy * energy - mass * mass;
+            if (p>=0.) { p=TMath::Sqrt(p); }
+            else { p=0.; }
+
+            TLorentzVector p4 = GetDirection(mass, p);
+            G4ThreeVector pVec{p4.Px(), p4.Py(), p4.Pz()};
+
+            // -- sample random position from within the logical volume
+            G4ThreeVector position = GetRandomPositionInVolume(mLogicalVolume);
+
+            std::cout << "Generating beta with decay energy of : " << T << ", mass of " << mass << ", and total energy of: " << energy << std::endl;
+            AddDecayParticle(event, 11, position, 0.0, energy, pVec);
+        }
     }    
 
     // -- Box sampling
@@ -138,5 +185,19 @@
             pos.setZ(mTRandom3->Uniform(-1.0*box_ZhL, box_ZhL));
         }
         return pos;
+    }
+    
+    TLorentzVector BoxRadGeneratorAction::GetDirection(double& p, double& m)
+    {
+        // -- make it isotropic
+        double cosTheta = (2. * mTRandom3->Uniform(0., 1.) - 1.);
+        if (cosTheta < -1.0) cosTheta = -1.;
+        if (cosTheta > 1.0) cosTheta = 1.;
+        double const sinTheta = sqrt(1. - cosTheta * cosTheta);
+        double const phi = 2. * TMath::Pi() * mTRandom3->Uniform(0., 1.);
+        
+        TLorentzVector theDirection(p*sinTheta*std::cos(phi), p*sinTheta*std::sin(phi), p*cosTheta, std::sqrt(p*p + m*m));
+
+        return theDirection;
     }
  }

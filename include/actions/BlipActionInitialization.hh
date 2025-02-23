@@ -16,6 +16,10 @@
 #include "TrackingAction.hh"
 #include "Core.hh"
 
+#ifdef BLIP_YAML
+#include "yaml-cpp/yaml.h"
+#endif
+
 namespace Blip
 {
     class BlipActionInitialization : public G4VUserActionInitialization
