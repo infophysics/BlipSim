@@ -94,7 +94,7 @@ namespace Blip
             double t = (*mSamplingHist).GetRandom(); // -- keV
             double KE = t / 1.0E3; // -- convert to MeV, the default unit of G4
             mDecayKEs.push_back(KE);
-            std::cout << "Generating beta with decay energy of : " << t << " [keV]" << std::endl;
+            //<--std::cout << "Generating beta with decay energy of : " << t << " [keV]" << std::endl;
         }
         return true;
     }
@@ -114,7 +114,7 @@ namespace Blip
             double t = (*mSamplingHist).GetRandom(); // -- keV
             double KE = t / 1.0E3; // -- convert to MeV, the default unit of G4
             outputKEs.push_back(KE);
-            std::cout << "Generating beta with decay energy of : " << t << " [keV] " << std::endl;
+            //<--std::cout << "Generating beta with decay energy of : " << t << " [keV] " << std::endl;
         }
         return true;
     }

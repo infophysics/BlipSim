@@ -67,7 +67,6 @@
         // -- read in and check the config. TODO: add more thorough checks..
         if (mConfig["generator"]["radiological"])           { mRadName = mConfig["generator"]["radiological"].as<std::string>() ; }
         if (mConfig["generator"]["rateInBqPerCC"])          { rateInBq = mConfig["generator"]["rateInBqPerCC"].as<G4double>(); } // -- decays per sec per cm^3
-        if (mConfig["generator"]["nDecays"])                { mNBetas = mConfig["generator"]["nDecays"].as<int>() ; }
         if (mConfig["generator"]["spectrumPath"])           { mSpectrumPath = mConfig["generator"]["spectrumPath"].as<std::string>() ; }
         if (mConfig["generator"]["energy"])                 { mFixedEnergy = mConfig["generator"]["energy"].as<G4double>() * keV; }
 
@@ -105,22 +104,22 @@
         //double meanNumberOfDecays = (rateInBq * mVolume_cm3 * deltaT_s)/(1.E6);
         double meanNumberOfDecays = (rateInBq * mVolume_cm3 * deltaT_s);
 
-        // -- sample from a Poisson distribution
-        mNBetas = mTRandom3->Poisson(meanNumberOfDecays);
-        std::cout << "Generating " << mNBetas << " beta decays" << std::endl;
+        bool overrideNDecays = false;
+        if (mConfig["generator"]["overrideNDecays"]) { overrideNDecays = mConfig["generator"]["overrideNDecays"].as<bool>(); }
 
-        // -- test
-        //mNBetas = 100;
+        // -- some fixed number of decays to make it simpler
+        if (overrideNDecays) {
+            mNBetas = mConfig["generator"]["nDecays"].as<int>() ; 
+        } else {
+            // -- sample from a Poisson distribution
+            mNBetas = mTRandom3->Poisson(meanNumberOfDecays);
+        }
+        std::cout << "Generating " << mNBetas << " beta decays" << std::endl;
 
         // -- sample the decays
         //bool test = mSpectrumReader->SampleTheRadiological(mNBetas);
         bool test = mSpectrumReader->GenNDecays(mRadName, mNBetas);
         if (test) { std::cout << "Successfully sampled the spectrum " << mNBetas << " times!\n"; }
-
-        //mParticleGun = new G4ParticleGun(1); // -- Multiple decays
-        //mParticleGun->SetParticleDefinition(G4Electron::Electron()); // -- the beta
-        //mParticleGun->SetParticleEnergy(mFixedEnergy); // -- default energy
-        //mParticleGun->SetParticleMomentumDirection(G4ThreeVector(0., 0., 1.));
     }    
 
     void BoxRadGeneratorAction::AddDecayParticle(G4Event* event, const int pdg, const G4ThreeVector& pos, const double time, const double energy, const G4ThreeVector& mom)
@@ -139,8 +138,8 @@
 
         // -- get the mass
         G4double mass = G4Electron::Electron()->GetPDGMass();
-        std::cout << "Electron mass = " << mass << std::endl;
-        std::cout << "Producing " << NBetas << " decays" << std::endl;
+        G4cout << "Electron mass = " << mass << "\n";
+        G4cout << "Producing " << NBetas << " decays" << "\n";
 
         for (size_t i = 0; i<NBetas; i++)
         {
@@ -158,7 +157,7 @@
             // -- sample random position from within the logical volume
             G4ThreeVector position = GetRandomPositionInVolume(mLogicalVolume);
 
-            std::cout << "Generating beta with decay energy of : " << T << ", mass of " << mass << ", and total energy of: " << energy << std::endl;
+            //<--std::cout << "Generating beta with decay energy of : " << T << ", mass of " << mass << ", and total energy of: " << energy << std::endl;
             AddDecayParticle(event, 11, position, 0.0, energy, pVec);
         }
     }    

@@ -1,8 +1,8 @@
 # ARTIE manager parameters
 manager:
-    number_of_threads:  1
-    number_of_runs:     1
-    number_of_events:   1
+    number_of_threads:  8
+    number_of_runs:     8
+    number_of_events:   32
     seed:               10942
     mode:               "run"   # interactive/run
     output_filename:    "blip_test"
@@ -24,14 +24,15 @@ hall:
     world_y: 20    # m
     world_z: 60    # m
     world_material: "high_vacuum"
-    argon_x: 20
-    argon_y: 20
-    argon_z: 60
+    argon_x: 7 
+    argon_y: 7 
+    argon_z: 7 
     
 # ARTIE-I generator parameters
 generator:
-    radiological:   "Argon_39"
-    rateInBqPerCC:  0.00141
-    nDecays:        100
-    spectrumPath:   "/home/rivera/Documents/Code/Blips/BlipSim/spectra/"
-    energy:         500
+    radiological:     "Argon_39"
+    rateInBqPerCC:    0.00141
+    overrideNDecays:  false
+    nDecays:          100
+    spectrumPath:     "/home/rivera/Documents/Code/Blips/BlipSim/spectra/"
+    energy:           500

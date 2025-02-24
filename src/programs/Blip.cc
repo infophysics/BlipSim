@@ -32,6 +32,8 @@
 #include "PhysicsList.hh"
 #include "MyQGSP_BERT_ArHP.hh"
 
+#include "TROOT.h"
+
 int main(int argc, char** argv)
 {
     // load in the config file
@@ -69,6 +71,7 @@ int main(int argc, char** argv)
     RunManager->SetNumberOfThreads(
         Blip::EventManager::GetEventManager()->NumberOfThreads()
     );
+    ROOT::EnableImplicitMT(Blip::EventManager::GetEventManager()->NumberOfThreads());
 #else
     G4RunManager* RunManager = new G4RunManager;
 #endif
