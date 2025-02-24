@@ -1,7 +1,7 @@
 # ARTIE manager parameters
 manager:
     number_of_threads:  8
-    number_of_runs:     8
+    number_of_runs:     2
     number_of_events:   32
     seed:               10942
     mode:               "run"   # interactive/run
@@ -28,11 +28,13 @@ hall:
     argon_y: 7 
     argon_z: 7 
     
-# ARTIE-I generator parameters
+# BoxRadGenerator parameters
 generator:
-    radiological:     "Argon_39"
-    rateInBqPerCC:    0.00141
-    overrideNDecays:  false
-    nDecays:          100
-    spectrumPath:     "/home/rivera/Documents/Code/Blips/BlipSim/spectra/"
-    energy:           500
+    start_time_ns:      -250000     # 250 us, before the trigger
+    end_time_ns:        2750000     # 2.75 ms, post trigger
+    radiological:       "Argon_39"
+    rateInBqPerCC:      0.00141
+    overrideNDecays:    false
+    nDecays:            100
+    spectrumPath:       "/home/rivera/Documents/Code/Blips/BlipSim/spectra/"
+    energy:             500

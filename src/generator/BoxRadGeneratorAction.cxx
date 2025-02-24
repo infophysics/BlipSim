@@ -15,6 +15,7 @@
  #include "G4PhysicalConstants.hh" 
  #include "G4SystemOfUnits.hh"
  #include "G4Electron.hh"
+ #include "G4Neutron.hh"
  #include "G4Box.hh"
  #include "G4ThreeVector.hh"
  #include "G4PrimaryVertex.hh"
@@ -61,14 +62,22 @@
 
     // -- DUMMY function for now
     BoxRadGeneratorAction::BoxRadGeneratorAction(YAML::Node config)
-    : mConfig(config)
+    : mConfig(config),
+    mRadName("Argon_39"),
+    mRateInBq(0.00141),
+    mFixedEnergy(500*keV),
+    mStartT(0.),
+    mEndT(3.E6)
     {
-
+        CLHEP::RandFlat mFlat(*mEngine);
+        CLHEP::RandPoisson mPoisson(*mEngine);
         // -- read in and check the config. TODO: add more thorough checks..
         if (mConfig["generator"]["radiological"])           { mRadName = mConfig["generator"]["radiological"].as<std::string>() ; }
-        if (mConfig["generator"]["rateInBqPerCC"])          { rateInBq = mConfig["generator"]["rateInBqPerCC"].as<G4double>(); } // -- decays per sec per cm^3
+        if (mConfig["generator"]["rateInBqPerCC"])          { mRateInBq = mConfig["generator"]["rateInBqPerCC"].as<G4double>(); } // -- decays per sec per cm^3
         if (mConfig["generator"]["spectrumPath"])           { mSpectrumPath = mConfig["generator"]["spectrumPath"].as<std::string>() ; }
         if (mConfig["generator"]["energy"])                 { mFixedEnergy = mConfig["generator"]["energy"].as<G4double>() * keV; }
+        if (mConfig["generator"]["start_time_ns"])          { mStartT = mConfig["generator"]["start_time_ns"].as<G4double>() * ns; }
+        if (mConfig["generator"]["end_time_ns"])            { mEndT = mConfig["generator"]["end_time_ns"].as<G4double>() * ns; }
 
         G4bool fileExists = false;
         std::string fullPath = mSpectrumPath + mRadName + ".root";
@@ -96,13 +105,14 @@
         if (mBox) { mVolume = mBox->GetCubicVolume(); } // -- volume in mm^3
         std::cout << "Argon box volume = " << mVolume << std::endl;
 
-        mTRandom3 = new TRandom3();
+        mTRandom3 = new TRandom3(1094);
 
         // -- Calculate the number of decays to generate
         G4double mVolume_cm3 = mVolume / 1000.; // going from mm^3 to cm^3
-        G4double deltaT_s = 3.E-3; // -- 15 ms in seconds to match the units of Bq
-        //double meanNumberOfDecays = (rateInBq * mVolume_cm3 * deltaT_s)/(1.E6);
-        double meanNumberOfDecays = (rateInBq * mVolume_cm3 * deltaT_s);
+        //G4double deltaT_s = 3.E-3; // -- 3 ms in seconds to match the units of Bq
+        G4double deltaT_s = (mEndT - mStartT)/(1.E9); // -- seconds to match units of Bq
+        //double meanNumberOfDecays = (mRateInBq * mVolume_cm3 * deltaT_s)/(1.E6);
+        double meanNumberOfDecays = (mRateInBq * mVolume_cm3 * deltaT_s);
 
         bool overrideNDecays = false;
         if (mConfig["generator"]["overrideNDecays"]) { overrideNDecays = mConfig["generator"]["overrideNDecays"].as<bool>(); }
@@ -112,9 +122,12 @@
             mNBetas = mConfig["generator"]["nDecays"].as<int>() ; 
         } else {
             // -- sample from a Poisson distribution
+            //mPoissonQ = new RandPoissonQ();
+            //mNBetas = mPoissonQ->Poisson(meanNumberOfDecays);
+            //mNBetas = mPoisson.fire(meanNumberOfDecays);
             mNBetas = mTRandom3->Poisson(meanNumberOfDecays);
         }
-        std::cout << "Generating " << mNBetas << " beta decays" << std::endl;
+        std::cout << "Generating " << mNBetas << " beta decays" << ", (mean number should be " << meanNumberOfDecays << ")" << std::endl;
 
         // -- sample the decays
         //bool test = mSpectrumReader->SampleTheRadiological(mNBetas);
@@ -131,6 +144,21 @@
 
     void BoxRadGeneratorAction::GeneratePrimaries(G4Event* event)
     {
+        // -- Add a thermal neutron in here for now. The neutron will always be the first particle
+        G4double thermalEnergy = (1/40.)/(1.0E6); // -- 1/40th of an eV in MeV
+        G4ThreeVector neutronPos = GetRandomPositionInVolume(mLogicalVolume);
+        G4double neutronMass = G4Neutron::Neutron()->GetPDGMass();
+        G4double neutronEnergy = thermalEnergy + neutronMass; // -- in MeV
+        G4double neutronP = neutronEnergy * neutronEnergy - neutronMass * neutronMass;
+        if (neutronP>=0.) { neutronP=TMath::Sqrt(neutronP); }
+        else { neutronP=0.; }
+
+        TLorentzVector neutronP4 = GetDirection(neutronMass, neutronP);
+        G4ThreeVector neutronPVec{neutronP4.Px(), neutronP4.Py(), neutronP4.Pz()};
+
+        // -- It's the same procedure for adding a neutrons as the decay particles
+        AddDecayParticle(event, 2112, neutronPos, 0.0, neutronEnergy, neutronPVec);
+
         // loop over the beta energies
         std::vector<double> theKEs = mSpectrumReader->getKineticEnergies();
 
@@ -157,8 +185,11 @@
             // -- sample random position from within the logical volume
             G4ThreeVector position = GetRandomPositionInVolume(mLogicalVolume);
 
+            // -- sample random time between the start and end time of the simulation
+            G4double t_i = mTRandom3->Uniform(mStartT, mEndT);
+
             //<--std::cout << "Generating beta with decay energy of : " << T << ", mass of " << mass << ", and total energy of: " << energy << std::endl;
-            AddDecayParticle(event, 11, position, 0.0, energy, pVec);
+            AddDecayParticle(event, 11, position, t_i, energy, pVec);
         }
     }    
 

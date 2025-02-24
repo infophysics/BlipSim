@@ -16,6 +16,10 @@
 #include "G4ThreeVector.hh"
 #include "G4ParticleGun.hh"
 
+#include "CLHEP/Random/RandomEngine.h"
+#include "CLHEP/Random/RandFlat.h"
+#include "CLHEP/Random/RandPoisson.h"
+
 #include "TLorentzVector.h"
 
 #include "TFile.h"
@@ -60,14 +64,16 @@ namespace Blip
 
         private:
             G4ParticleGun* mParticleGun;
-            SpectrumReader* mSpectrumReader; // -- Reader for radiological
-            G4LogicalVolume* mLogicalVolume; // -- Logical volume for the rads
-            G4Box* mBox; // -- box of argon
-            G4double mVolume; // -- volume of argon box in units of mm^3
-            std::string mRadName; // -- name of radiological (e.g. Argon_39, Argon_42, etc)
-            G4double rateInBq; // -- Bequerel
-            std::string mSpectrumPath; // -- path of radioIsotope file
-            G4double mFixedEnergy; // -- fixed energy for now
+            SpectrumReader* mSpectrumReader;    // -- Reader for radiological
+            G4LogicalVolume* mLogicalVolume;    // -- Logical volume for the rads
+            G4Box* mBox;                        // -- box of argon
+            G4double mVolume;                   // -- volume of argon box in units of mm^3
+            std::string mRadName;               // -- name of radiological (e.g. Argon_39, Argon_42, etc)
+            G4double mRateInBq;                 // -- Bequerel
+            std::string mSpectrumPath;          // -- path of radioIsotope file
+            G4double mFixedEnergy;              // -- fixed energy for now
+            G4double mStartT;                   // -- start time in ns
+            G4double mEndT;                     // -- end time in ns
 
             G4String mParticleName;
             G4double mParticleMomentum;
@@ -75,7 +81,12 @@ namespace Blip
             G4ThreeVector mParticlePosition;
             G4ThreeVector mParticleMomentumDirection;
 
-            TRandom3* mTRandom3 = {0};
+            // -- Random Engine
+            CLHEP::HepRandomEngine* mEngine = {0};
+
+            //TRandom3* mTRandom3 = {0};
+            TRandom3* mTRandom3;
+            //RandPoissonQ* mPoissonQ;
 
             YAML::Node mConfig;
 
